@@ -10,16 +10,27 @@ import com.cloudinary.utils.ObjectUtils;
 import io.github.cdimascio.dotenv.Dotenv;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
+
+    //Upload config
+    private final Map configUpload = ObjectUtils.asMap(
+            "use_filename", true,
+            "unique_filename", true,
+            "overwrite", false,
+            "transformation", new Transformation<>().width(400).height(400).crop("pad").fetchFormat("avif")
+    );
 
     public int addNewPost (AddNewPostDto addNew) {
         if (addNew.getTitle().isEmpty()) {
@@ -34,23 +45,7 @@ public class PostService {
         if (addNew.getUserCreatedId() == 0){
             return -4;
         }
-        Dotenv env = Dotenv.load();
-        Cloudinary cloudinary = new Cloudinary(env.get("CLOUDINARY_URL"));
-        Map configUpload = ObjectUtils.asMap(
-                "use_filename", true,
-                "unique_filename", true,
-                "overwrite", false,
-                "transformation", new Transformation<>().width(400).height(400).crop("pad").fetchFormat("avif")
-        );
-        CompletableFuture<Map> uploaded = CompletableFuture.supplyAsync(() -> {
-            try {
-                Map response = cloudinary.uploader().upload(addNew.getImage().getBytes(), configUpload);
-                return response;
-            }catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-        Map result = uploaded.join();
+        Map result = uploadImage(addNew.getImage());
         LocalDateTime now = LocalDateTime.now(Clock.systemDefaultZone());
         Post post = Post.builder()
                 .title(addNew.getTitle())
@@ -61,5 +56,55 @@ public class PostService {
                 .build();
         postRepository.save(post);
         return 1;
+    }
+    public boolean updateNewPost(int idPost, AddNewPostDto update) throws IOException {
+        Optional<Post> postExist = postRepository.findById(idPost);
+        if (postExist.isPresent()){
+            Post post = postExist.get();
+            if (update.getImage() != null) {
+                String publicId = extractUrlToGetPublicId(post.getUrlImage());
+                deleteImage(publicId);
+                Map uploadNewImage = uploadImage(update.getImage());
+                post.setUrlImage(uploadNewImage.get("url").toString());
+            }
+            post.setContent(update.getContent());
+            post.setTitle(update.getTitle());
+            post.setUserCreatedId(update.getUserCreatedId());
+            postRepository.save(post);
+            return true;
+        }
+        return false;
+    }
+    public boolean deletePost(int postId) throws IOException {
+        Optional<Post> postExist = postRepository.findById(postId);
+        if (postExist.isPresent()){
+            Post post = postExist.get();
+            String publicId = extractUrlToGetPublicId(post.getUrlImage());
+            deleteImage(publicId);
+            postRepository.delete(post);
+            return true;
+        }
+        return false;
+    }
+    public void deleteImage(String publicId) throws IOException {
+        Dotenv env = Dotenv.load();
+        Cloudinary cloudinary = new Cloudinary(env.get("CLOUDINARY_URL"));
+        cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
+    }
+    public Map uploadImage(MultipartFile file){
+        Dotenv env = Dotenv.load();
+        Cloudinary cloudinary = new Cloudinary(env.get("CLOUDINARY_URL"));
+        CompletableFuture<Map> uploaded = CompletableFuture.supplyAsync(() -> {
+            try {
+                return cloudinary.uploader().upload(file.getBytes(), configUpload);
+            }catch (Exception e) {
+                throw new IllegalStateException("Failed to upload image", e);
+            }
+        });
+        return uploaded.join();
+    }
+    public String extractUrlToGetPublicId(String urlImage){
+        String[] getPublicId = urlImage.split("//")[1].split("/");
+        return getPublicId[getPublicId.length - 1].split(".avif")[0];
     }
 }
