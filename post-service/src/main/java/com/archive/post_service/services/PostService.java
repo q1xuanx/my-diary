@@ -18,6 +18,9 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +34,7 @@ public class PostService {
             "overwrite", false,
             "transformation", new Transformation<>().width(400).height(400).crop("pad").fetchFormat("avif")
     );
-
-    public int addNewPost (AddNewPostDto addNew) {
+    public int addNewPost (AddNewPostDto addNew) throws ExecutionException, InterruptedException, TimeoutException {
         if (addNew.getTitle().isEmpty()) {
             return -1;
         }
@@ -57,7 +59,7 @@ public class PostService {
         postRepository.save(post);
         return 1;
     }
-    public boolean updateNewPost(int idPost, AddNewPostDto update) throws IOException {
+    public boolean updateNewPost(int idPost, AddNewPostDto update) throws IOException, ExecutionException, InterruptedException, TimeoutException {
         Optional<Post> postExist = postRepository.findById(idPost);
         if (postExist.isPresent()){
             Post post = postExist.get();
@@ -91,7 +93,7 @@ public class PostService {
         Cloudinary cloudinary = new Cloudinary(env.get("CLOUDINARY_URL"));
         cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
     }
-    public Map uploadImage(MultipartFile file){
+    public Map uploadImage(MultipartFile file) throws ExecutionException, InterruptedException, TimeoutException {
         Dotenv env = Dotenv.load();
         Cloudinary cloudinary = new Cloudinary(env.get("CLOUDINARY_URL"));
         CompletableFuture<Map> uploaded = CompletableFuture.supplyAsync(() -> {
@@ -101,7 +103,7 @@ public class PostService {
                 throw new IllegalStateException("Failed to upload image", e);
             }
         });
-        return uploaded.join();
+        return uploaded.get(10, TimeUnit.SECONDS);
     }
     public String extractUrlToGetPublicId(String urlImage){
         String[] getPublicId = urlImage.split("//")[1].split("/");

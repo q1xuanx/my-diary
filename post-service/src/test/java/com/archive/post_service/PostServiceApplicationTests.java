@@ -18,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 
 @SpringBootTest
@@ -37,14 +39,14 @@ class PostServiceApplicationTests {
 	}
 
 	@Test
-	void shouldReturnMinus1WhenTitleIsEmpty() {
+	void shouldReturnMinus1WhenTitleIsEmpty() throws ExecutionException, InterruptedException, TimeoutException {
 		addNewPostDto.setTitle("");
 		int result = postService.addNewPost(addNewPostDto);
 		assertEquals(-1, result);
 	}
 
 	@Test
-	void shouldReturnMinus2WhenImageIsNull() {
+	void shouldReturnMinus2WhenImageIsNull() throws ExecutionException, InterruptedException, TimeoutException {
 		addNewPostDto.setTitle("Test title");
 		addNewPostDto.setImage(null);
 		int result = postService.addNewPost(addNewPostDto);
