@@ -28,6 +28,10 @@ public class PostController {
             };
         }
     }
+    @GetMapping("/get-list/{idUser}")
+    public ResponseEntity<Object> getListPost (@PathVariable int idUser) {
+        return ResponseEntity.ok().body(postService.getAllPostById(idUser));
+    }
     @PostMapping("/upload-post")
     public ResponseEntity<Object> uploadPost(@ModelAttribute AddNewPostDto addNewPostDto) throws ExecutionException, InterruptedException, TimeoutException {
         int response = postService.addNewPost(addNewPostDto);
@@ -45,12 +49,12 @@ public class PostController {
         }
         return ResponseEntity.badRequest().body(new errorResponse(-5).errorMessage());
     }
-    @DeleteMapping("/delete-post/{idPost}")
-    public ResponseEntity<Object> deletePost(@PathVariable int idPost) throws IOException {
-        boolean deleted = postService.deletePost(idPost);
+    @DeleteMapping("/delete-post/{idPost}/{idUserDelete}")
+    public ResponseEntity<Object> deletePost(@PathVariable int idPost, @PathVariable int idUserDelete) throws IOException {
+        boolean deleted = postService.deletePost(idPost, idUserDelete);
         if (deleted) {
             return ResponseEntity.ok().body("Delete Post Success");
         }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found post to delete");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Not found post to delete | you can't delete this post");
     }
 }

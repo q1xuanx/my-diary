@@ -2,6 +2,7 @@ package com.archive.post_service.services;
 
 
 import com.archive.post_service.dto.AddNewPostDto;
+import com.archive.post_service.dto.ListPostDto;
 import com.archive.post_service.entites.Post;
 import com.archive.post_service.repositories.PostRepository;
 import com.cloudinary.Cloudinary;
@@ -15,6 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -77,10 +80,13 @@ public class PostService {
         }
         return false;
     }
-    public boolean deletePost(int postId) throws IOException {
+    public boolean deletePost(int postId, int idUserDelete) throws IOException {
         Optional<Post> postExist = postRepository.findById(postId);
-        if (postExist.isPresent()){
+        if (postExist.isPresent()) {
             Post post = postExist.get();
+            if (post.getUserCreatedId() != idUserDelete){
+                return false;
+            }
             String publicId = extractUrlToGetPublicId(post.getUrlImage());
             deleteImage(publicId);
             postRepository.delete(post);
@@ -108,5 +114,13 @@ public class PostService {
     public String extractUrlToGetPublicId(String urlImage){
         String[] getPublicId = urlImage.split("//")[1].split("/");
         return getPublicId[getPublicId.length - 1].split(".avif")[0];
+    }
+    public List<ListPostDto> getAllPostById(int idUser){
+        List<Post> listPost = postRepository.getAllByUserCreatedId(idUser);
+        List<ListPostDto> listPostDto = new ArrayList<>();
+        for (Post post : listPost) {
+            listPostDto.add(new ListPostDto(post.getTitle(), post.getContent(), post.getUrlImage(), post.getCreateDate()));
+        }
+        return listPostDto;
     }
 }

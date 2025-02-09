@@ -19,7 +19,6 @@ import java.io.IOException;
 @RequestMapping("/user-service")
 public class DiaryUserController {
     private final DiaryUserService diaryUserService;
-
     public record errorMessage(int code) {
         public String printError(){
             return switch(code) {
@@ -31,7 +30,6 @@ public class DiaryUserController {
             };
         }
     }
-
     @PostMapping("/create")
     public ResponseEntity<Object> createDiaryUser(@RequestBody CreatUserDto diaryUser) {
         int status = diaryUserService.createUser(diaryUser);
@@ -62,6 +60,24 @@ public class DiaryUserController {
         String result = status.block();
         if (result != null && result.equals("Upload Post Success")){
             return ResponseEntity.status(HttpStatus.CREATED).body("Upload successful");
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(status);
+    }
+    @PutMapping("/update-diary/{idPost}")
+    public ResponseEntity<Object> updateDiary(@PathVariable int idPost, @ModelAttribute PostDto update){
+        Mono<String> status = diaryUserService.updatePost(idPost, update);
+        String result = status.block();
+        if (result != null && result.equals("Update Post Success")){
+            return ResponseEntity.status(HttpStatus.OK).body(update);
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(status);
+    }
+    @DeleteMapping("/delete-post/{idPost}/{idUser}")
+    public ResponseEntity<Object> deletePost(@PathVariable int idPost, @PathVariable int idUser){
+        Mono<String> status = diaryUserService.deletePost(idPost, idUser);
+        String result = status.block();
+        if (result != null && result.equals("Delete Post Success")){
+            return ResponseEntity.status(HttpStatus.OK).body("Delete successful");
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(status);
     }
