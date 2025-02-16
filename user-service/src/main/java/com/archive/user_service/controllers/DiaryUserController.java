@@ -4,6 +4,7 @@ import com.archive.user_service.dto.CreatUserDto;
 import com.archive.user_service.dto.LoginDto;
 import com.archive.user_service.dto.PostDto;
 import com.archive.user_service.dto.UpdateUserDto;
+import com.archive.user_service.entities.DiaryUser;
 import com.archive.user_service.services.DiaryUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,11 +41,11 @@ public class DiaryUserController {
     }
     @PostMapping("/login")
     public ResponseEntity<Object> loginToDiary(@RequestBody LoginDto loginDto) {
-        int valid = diaryUserService.loginUser(loginDto);
-        if (valid == 1){
-            return ResponseEntity.status(HttpStatus.OK).body(loginDto);
+        DiaryUser valid = diaryUserService.loginUser(loginDto);
+        if (valid.getIdUser() != -1){
+            return ResponseEntity.status(HttpStatus.OK).body(valid);
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new errorMessage(valid).printError());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(valid);
     }
     @PutMapping("/update")
     public ResponseEntity<Object> updateUser(@RequestBody UpdateUserDto updateUserDto){

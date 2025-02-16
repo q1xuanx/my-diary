@@ -51,12 +51,12 @@ public class DiaryUserService {
         diaryUserRepository.save(diaryUser);
         return 1;
     }
-    public int loginUser(LoginDto loginDto){
+    public DiaryUser loginUser(LoginDto loginDto){
         DiaryUser diaryUser = diaryUserRepository.findByUsernameAndPassword(loginDto.getUserName(), loginDto.getPassword());
         if (diaryUser == null){
-            return -1;
+            return DiaryUser.builder().idUser(-1).build();
         }
-        return diaryUser.getIdUser();
+        return diaryUser;
     }
     public int updateUser(UpdateUserDto updateUser){
         Optional<DiaryUser> findDiaryUser = diaryUserRepository.findById(updateUser.getIdUser());
