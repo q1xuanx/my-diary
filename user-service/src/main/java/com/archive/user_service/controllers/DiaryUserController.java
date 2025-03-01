@@ -56,7 +56,7 @@ public class DiaryUserController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new errorMessage(status).printError());
     }
     @PostMapping("/upload-diary")
-    public ResponseEntity<Object> uploadDiary(@ModelAttribute PostDto postDto) throws IOException {
+    public ResponseEntity<Object> uploadDiary(@ModelAttribute PostDto postDto)  {
         Mono<String> status = diaryUserService.createPost(postDto);
         String result = status.block();
         if (result != null && result.equals("Upload Post Success")){

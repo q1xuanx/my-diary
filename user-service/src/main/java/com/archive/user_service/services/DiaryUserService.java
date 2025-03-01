@@ -21,6 +21,7 @@ import reactor.core.scheduler.Schedulers;
 import java.time.Duration;
 import java.util.Optional;
 
+@SuppressWarnings("DuplicatedCode")
 @Service
 @RequiredArgsConstructor
 public class DiaryUserService {
@@ -30,7 +31,7 @@ public class DiaryUserService {
     private final Logger log = LoggerFactory.getLogger(DiaryUserService.class);
 
     public int createUser(CreatUserDto creatUserDto){
-        if (creatUserDto.getUserName().isEmpty()){
+        if (creatUserDto.getUserName().isEmpty() || diaryUserRepository.existsByUsername(creatUserDto.getUserName())){
             return -1;
         }
         if (creatUserDto.getPassword().isEmpty()){

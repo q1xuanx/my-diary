@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ListPostDto {
+    private int idPost; 
     private String title;
     private String content;
     private String urlImage;

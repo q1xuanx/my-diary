@@ -119,7 +119,7 @@ public class PostService {
         List<Post> listPost = postRepository.getAllByUserCreatedId(idUser);
         List<ListPostDto> listPostDto = new ArrayList<>();
         for (Post post : listPost) {
-            listPostDto.add(new ListPostDto(post.getTitle(), post.getContent(), post.getUrlImage(), post.getCreateDate()));
+            listPostDto.add(new ListPostDto(post.getIdPost(), post.getTitle(), post.getContent(), post.getUrlImage(), post.getCreateDate()));
         }
         return listPostDto;
     }
